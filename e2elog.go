@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -68,7 +69,11 @@ func Coverage(s *openapi3.Swagger, pathToLogs string, stripUrlPrefix string) (Su
 
 		endpointIndex := funk.IndexOf(endpoints, func(endpoint Endpoint) bool {
 			if endpoint.OperationID == response.Header.Get("operation-id") {
-				return true
+				if endpoint.Method == httpLog.Method {
+					if endpoint.StatusCode == strconv.Itoa(httpLog.StatusCode) {
+						return true
+					}
+				}
 			}
 			return false
 		})
