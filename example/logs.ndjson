@@ -1,0 +1,8 @@
+{"method":"POST","url":"/api/v1/user/register","status_code":201}
+{"method":"POST","url":"/api/v1/user/login","status_code":200}
+{"method":"GET","url":"/api/v1/user/info/f40ff9c1-1d75-4888-a79b-148767feafaa","status_code":200}
+{"method":"PUT","url":"/api/v1/remind/daily/","status_code":200}
+{"method":"GET","url":"/api/v1/user/info/f40ff9c1-1d75-4888-a79b-148767feafaa","status_code":200}
+{"method":"DELETE","url":"/api/v1/remind/daily/remind_v1","status_code":200}
+{"method":"GET","url":"/api/v1/user/info/f40ff9c1-1d75-4888-a79b-148767feafaa","status_code":200}
+{"method":"DELETE","url":"/api/v1/user/f40ff9c1-1d75-4888-a79b-148767feafaa","status_code":200}

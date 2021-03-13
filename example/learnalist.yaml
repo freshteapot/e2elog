@@ -1,0 +1,1905 @@
+openapi: "3.0.2"
+info:
+  title: Learnalist API
+  version: "1.0"
+servers:
+  - url: https://learnalist.net/api/v1
+  - url: http://localhost:1234/api/v1
+components:
+  schemas:
+    AnyType:
+      anyOf:
+        - type: string
+        - type: number
+        - type: integer
+        - type: boolean
+        - type: array
+          items: {}
+        - type: object
+    HttpResponseMessage:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    Kind:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+    Version:
+      type: object
+      required:
+        - gitHash
+        - gitDate
+        - version
+        - url
+      properties:
+        gitHash:
+          type: string
+        gitDate:
+          type: string
+        version:
+          type: string
+        url:
+          type: string
+    HttpAssetShareRequestBody:
+      type: object
+      required:
+        - uuid
+      properties:
+        uuid:
+          type: string
+        action:
+          type: string
+          enum:
+            - private
+            - public
+    HttpAssetUploadRequestBody:
+      type: object
+      required:
+        - file
+      properties:
+        shared_with:
+          type: string
+          enum:
+            - private
+            - public
+        file:
+          type: string
+          format: binary
+    HttpAssetUploadResponse:
+      type: object
+      required:
+        - href
+        - uuid
+        - ext
+      properties:
+        href:
+          type: string
+        uuid:
+          type: string
+        ext:
+          type: string
+    Plank:
+      type: object
+      required:
+        - showIntervals
+        - intervalTime
+        - beginningTime
+        - currentTime
+        - timerNow
+        - intervalTimerNow
+        - laps
+      properties:
+        uuid:
+          type: string
+        showIntervals:
+          type: boolean
+        intervalTime:
+          type: integer
+        beginningTime:
+          type: integer
+          format: int64
+        currentTime:
+          type: integer
+          format: int64
+        timerNow:
+          type: integer
+        intervalTimerNow:
+          type: integer
+        laps:
+          type: integer
+    HttpUserLoginIDPInput:
+      type: object
+      required:
+        - idp
+      properties:
+        idp:
+          type: string
+          enum:
+            - google
+        id_token:
+          type: string
+          description: We will verify this to confirm your identity and create an account linked to your id.
+        code:
+          type: string
+          description: Code from the server, part of a possible handshake
+    HttpUserInfoInput:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 20
+          description: This will be used to address you in the app(s) or website.
+          default: ""
+        created_via:
+          type: string
+          description: Let the server know the user was created via the plank app.
+          default: ""
+          enum:
+            - plank.app.v1
+        grant_public_list_write_access:
+          type: string
+          description: Give this user the ability to write public lists
+          default: ""
+    HttpUserRegisterInput:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        extra:
+          $ref: "#/components/schemas/HttpUserInfoInput"
+    HttpUserRegisterResponse:
+      type: object
+      required:
+        - username
+        - uuid
+      properties:
+        username:
+          type: string
+        uuid:
+          type: string
+    HttpUserLoginRequest:
+      allOf:
+        - $ref: "#/components/schemas/HttpUserRegisterInput"
+    HttpUserLoginResponse:
+      type: object
+      required:
+        - token
+        - user_uuid
+      properties:
+        token:
+          type: string
+        user_uuid:
+          type: string
+    AlistFrom:
+      type: object
+      description: "Give context of where this list was imported / synced from, if it is quizlet, cram, brainscape it is not possible to make this list public"
+      required:
+        - kind
+        - ext_uuid
+        - ref_url
+      properties:
+        kind:
+          type: string
+          description: Context of where it came from, when coming from quizlet, cram, brainscape, it is not possible to make the list public.
+          enum:
+            - quizlet
+            - cram
+            - brainscape
+            - learnalist
+        ext_uuid:
+          type: string
+        ref_url:
+          type: string
+    AlistInput:
+      type: object
+      required:
+        - info
+        - data
+      properties:
+        info:
+          $ref: "#/components/schemas/AlistInfo"
+        data:
+          $ref: "#/components/schemas/AnyType"
+          description: Data is based on the type. v1=AlistDataV1, v2=AlistDataV2 etc
+          example:
+            - $ref: "#/components/schemas/AlistDataV1"
+            - $ref: "#/components/schemas/AlistDataV2"
+    AlistInteract:
+      type: object
+      properties:
+        slideshow:
+          type: integer
+        totalrecall:
+          type: integer
+    AlistInfo:
+      type: object
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        labels:
+          type: array
+          items:
+            type: string
+        shared_with:
+          type: string
+        interact:
+          $ref: "#/components/schemas/AlistInteract"
+        from:
+          $ref: "#/components/schemas/AlistFrom"
+    AlistItemV1:
+      type: string
+    AlistDataV1:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlistItemV1"
+    AlistItemV2:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+    AlistDataV2:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlistItemV2"
+    Alist:
+      type: object
+      required:
+        - uuid
+        - kind
+      discriminator:
+        propertyName: kind
+      allOf:
+        - type: object
+          properties:
+            uuid:
+              type: string
+        - $ref: "#/components/schemas/AlistInput"
+    SpacedRepetitionEntryViewed:
+      type: object
+      required:
+        - uuid
+        - action
+      properties:
+        uuid:
+          type: string
+        action:
+          type: string
+    SpacedRepetitionNew:
+      type: object
+    SpacedRepetition:
+      type: object
+    SpacedRepetitionBaseNew:
+      type: object
+      required:
+        - show
+        - kind
+      properties:
+        show:
+          type: string
+        kind:
+          type: string
+    SpacedRepetitionBase:
+      required:
+        - uuid
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionBaseNew"
+        - type: object
+          properties:
+            uuid:
+              type: string
+    SpacedRepetitionBaseSettings:
+      type: object
+      required:
+        - level
+        - when_next
+      properties:
+        level:
+          type: string
+        when_next:
+          type: string
+          format: date-time
+          description: Set to UTC
+        created:
+          type: string
+          format: date-time
+          description: Set to UTC
+        ext_id:
+          type: string
+          description: Usually a reference to something meaningful to the creator of it
+    SpacedRepetitionBaseSettingsShow:
+      type: object
+      required:
+        - show
+      properties:
+        show:
+          type: string
+    SpacedRepetitionV1:
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionV1New"
+        - $ref: "#/components/schemas/SpacedRepetitionBase"
+    SpacedRepetitionV1New:
+      required:
+        - data
+        - settings
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionBaseNew"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/SpacedRepetitionDataV1"
+            settings:
+              $ref: "#/components/schemas/SpacedRepetitionSettingsV1"
+    SpacedRepetitionDataV1:
+      type: string
+    SpacedRepetitionSettingsV1:
+      $ref: "#/components/schemas/SpacedRepetitionBaseSettings"
+    SpacedRepetitionV2:
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionV2New"
+        - $ref: "#/components/schemas/SpacedRepetitionBase"
+    SpacedRepetitionV2New:
+      required:
+        - data
+        - settings
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionBaseNew"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/SpacedRepetitionDataV2"
+            settings:
+              $ref: "#/components/schemas/SpacedRepetitionSettingsV2"
+    SpacedRepetitionDataV2:
+      type: object
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+    SpacedRepetitionSettingsV2:
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionBaseSettingsShow"
+        - $ref: "#/components/schemas/SpacedRepetitionBaseSettings"
+    SpacedRepetitionOvertimeInputBase:
+      type: object
+      required:
+        - alist_uuid
+        - user_uuid
+      properties:
+        alist_uuid:
+          type: string
+        user_uuid:
+          type: string
+    SpacedRepetitionOvertimeInputV1:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/SpacedRepetitionOvertimeInputBase"
+    SpacedRepetitionOvertimeInputV2:
+      type: object
+      required:
+        - settings
+      allOf:
+        - type: object
+          properties:
+            settings:
+              type: object
+              required:
+                - show
+              properties:
+                show:
+                  type: string
+        - $ref: "#/components/schemas/SpacedRepetitionOvertimeInputBase"
+    SpacedRepetitionOvertimeInfo:
+      type: object
+      required:
+        - dripfeed_uuid
+        - alist_uuid
+        - user_uuid
+      properties:
+        dripfeed_uuid:
+          type: string
+        alist_uuid:
+          type: string
+        user_uuid:
+          type: string
+    ChallengeKind:
+      type: string
+      default: ""
+      enum:
+        - plank-group
+    ChallengePlankRecord:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Plank"
+        - type: object
+          properties:
+            user_uuid:
+              type: string
+              description: User uuid
+    ChallengeInput:
+      type: object
+      required:
+        - kind
+        - description
+      properties:
+        kind:
+          type: string
+          description: "Look at ChallengeKind for supported kinds"
+          default: ""
+        description:
+          type: string
+          default: ""
+    ChallengeShortInfo:
+      required:
+        - uuid
+        - created_by
+      allOf:
+        - $ref: "#/components/schemas/ChallengeInput"
+        - type: object
+          properties:
+            created:
+              type: string
+              format: date-time
+              description: Set to UTC
+            created_by:
+              type: string
+              description: User who created the challenge
+            uuid:
+              type: string
+    ChallengeInfo:
+      required:
+        - records
+        - users
+      allOf:
+        - $ref: "#/components/schemas/ChallengeShortInfo"
+        - type: object
+          properties:
+            users:
+              type: array
+              description: List of users
+              items:
+                type: object
+                properties:
+                  user_uuid:
+                    type: string
+                    description: User uuid
+                  name:
+                    type: string
+                    description: Name the user wants for this challenge
+            records:
+              type: array
+              description: List of records, specific to the kind
+              items:
+                $ref: "#/components/schemas/ChallengePlankRecord"
+    HttpMobileRegisterInput:
+      type: object
+      required:
+        - token
+        - app_identifier
+      properties:
+        token:
+          type: string
+          description: FCM token linked to the device
+          default: ""
+        app_identifier:
+          type: string
+          description: A unique identifier to allow the system to link a user with an app and use the correct token.
+          default: ""
+          enum:
+            - plank_v1
+            - remind_v1
+    MobileDeviceInfo:
+      description: Information linking a mobile device and app to a user
+      required:
+        - user_uuid
+      allOf:
+        - type: object
+          properties:
+            user_uuid:
+              type: string
+        - $ref: "#/components/schemas/HttpMobileRegisterInput"
+    RemindMedium:
+      type: string
+      description: What medium do you want the reminder sent via
+      default: ""
+      enum:
+        - push
+        - email
+    RemindDailySettings:
+      type: object
+      required:
+        - time_of_day
+        - tz
+        - app_identifier
+        - medium
+      properties:
+        time_of_day:
+          type: string
+          description: Time of day HH:MM
+          default: ""
+        tz:
+          type: string
+          description: Timezone
+          default: ""
+        app_identifier:
+          type: string
+          description: Which app to link this too
+          default: ""
+        medium:
+          type: array
+          description: "Which medium, look at RemindMedium"
+          items:
+            type: string
+            default: ""
+    AppSettingsRemindV1:
+      type: object
+      required:
+        - spaced_repetition
+      properties:
+        spaced_repetition:
+          type: object
+          required:
+            - push_enabled
+          properties:
+            push_enabled:
+              description: Enable push notifications
+              type: integer
+              minimum: 0
+              maximum: 1
+    MobilePlankAppV1Settings:
+      type: object
+      description: Settings for the plank app version 1
+      required:
+        - showIntervals
+        - intervalTime
+      properties:
+        showIntervals:
+          type: boolean
+        intervalTime:
+          type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    basicAuth:
+      type: http
+      scheme: basic
+  examples:
+    SpacedRepetitionInputV1:
+      value:
+        show: Hello
+        kind: v1
+        data: Hello
+    SpacedRepetitionV1:
+      value:
+        show: Hello
+        kind: v1
+        data: Hello
+        settings:
+          level: "0"
+          show: "Hello"
+          when_next: "2020-08-08T15:29:43Z"
+          created: "2020-08-08T14:29:43Z"
+        uuid: "90d31f693a34558d0ba3702cc42b62ba670bc010"
+    SpacedRepetitionInputV2:
+      value:
+        show: Hello
+        kind: v2
+        data:
+          from: hello
+          to: hi
+        settings:
+          show: from
+    SpacedRepetitionV2:
+      value:
+        show: Hello
+        kind: v2
+        data:
+          from: hello
+          to: hi
+        settings:
+          level: "0"
+          show: "from"
+          when_next: "2020-08-08T15:29:43Z"
+          created: "2020-08-08T14:29:43Z"
+        uuid: "90d31f693a34558d0ba3702cc42b62ba670bc010"
+#paths:
+security:
+  - bearerAuth: []
+  - basicAuth: []
+paths:
+  /version:
+    get:
+      operationId: getServerVersion
+      description: Get information about the server, linked to the git repo
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Version"
+  /assets/share:
+    put:
+      tags:
+        - asset
+      operationId: shareAsset
+      description: Set asset for public or private access
+      requestBody:
+        description: Share with...
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpAssetShareRequestBody"
+      responses:
+        "200":
+          description: Asset updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "400":
+          description: Most likely the wrong action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: Access denied, due to not being owner of asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /assets/upload:
+    post:
+      tags:
+        - asset
+      operationId: addUserAsset
+      description: Upload asset and link it to the user logged in
+      requestBody:
+        description: File to upload
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/HttpAssetUploadRequestBody"
+      responses:
+        "201":
+          description: Asset uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpAssetUploadResponse"
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /assets/{uuid}:
+    get:
+      tags:
+        - asset
+      servers:
+        - url: https://learnalist.net/
+        - url: http://localhost:1234/
+      operationId: getAsset
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The asset.
+          content: {}
+    delete:
+      tags:
+        - asset
+      description: Deletes a single asset based on the UUID
+      operationId: deleteAsset
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of asset
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: asset deleted
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: Access denied, due to not being owner of asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Asset is not in the system
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/:
+    post:
+      tags:
+        - plank
+      operationId: addPlankEntry
+      description: Add plank stats
+      parameters:
+        - in: header
+          name: x-challenge
+          description: Link plank record to a challenge uuid
+          schema:
+            type: string
+      requestBody:
+        description: Stats about the plank
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Plank"
+      responses:
+        "200":
+          description: Plank record already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plank"
+        "201":
+          description: Plank added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plank"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/history:
+    get:
+      tags:
+        - plank
+      description: Get all planks for a given user
+      operationId: getPlankHistoryByUser
+      responses:
+        "200":
+          description: Return list of all entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plank"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/{uuid}:
+    delete:
+      tags:
+        - plank
+      description: Delete a single entry based on the UUID
+      operationId: deletePlankEntry
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: entry deleted
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Not able to find plank record linked to this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /user/register:
+    post:
+      tags:
+        - user
+      operationId: registerUserWithUsernameAndPassword
+      description: Register a new user with username and password
+      parameters:
+        - in: header
+          name: x-user-register
+          description: Restrict access to this endpoint, if you add the header and it matches the key, you are in.
+          schema:
+            type: string
+      requestBody:
+        description: Username and password
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpUserRegisterInput"
+      responses:
+        "200":
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpUserRegisterResponse"
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpUserRegisterResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /user/login/idp:
+    post:
+      tags:
+        - user
+      operationId: loginWithIdpIdToken
+      description: Login with idToken, mostly to support mobile devices.
+      security: []
+      requestBody:
+        description: Based on the idp, we will verify your id_token and log you in.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpUserLoginIDPInput"
+      responses:
+        "200":
+          description: You now have a login session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpUserLoginResponse"
+        "400":
+          description: Bad input, most likely, invalid json
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Idp not supported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: Missing data or invalid id_token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /user/login:
+    post:
+      tags:
+        - user
+      operationId: loginWithUsernameAndPassword
+      description: Login with username and password. The token can be used in future api requests via bearerAuth
+      security: []
+      requestBody:
+        description: Username and password
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpUserLoginRequest"
+      responses:
+        "200":
+          description: You now have a login session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpUserLoginResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: Username and password did not match what was in the system
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /user/info/{uuid}:
+    get:
+      tags:
+        - user
+      description: Get user information, app settings, preferences some user state
+      operationId: getUserInfo
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of user
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: user info has been changed
+          content:
+            application/json:
+              schema:
+                type: object
+    patch:
+      tags:
+        - user
+      description: Single or many updates to the users information
+      operationId: patchUserInfo
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of user to modify
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Allowed attributes to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpUserInfoInput"
+      responses:
+        "200":
+          description: user info has been changed
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /user/{uuid}:
+    delete:
+      tags:
+        - user
+      description: Deletes a user and there lists
+      operationId: deleteUser
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: user deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: UUID does not match that of the logged in user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /alist:
+    post:
+      tags:
+        - aList
+      operationId: addList
+      description: add a new list
+      requestBody:
+        description: A list object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AlistInput"
+      responses:
+        "201":
+          description: List has been created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alist"
+        "400":
+          description: Bad request, something is wrong with the list object
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Input had no errors but was not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /alist/{uuid}:
+    get:
+      tags:
+        - aList
+      description: Get a list
+      operationId: getListByUuid
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of list
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Return a list, data will depend on the list type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alist"
+        "404":
+          description: List is not in the system
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: User making request does not have access to the list in question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+    put:
+      tags:
+        - aList
+      description: Update a list
+      operationId: updateListByUuid
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of list
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: List to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Alist"
+      responses:
+        "200":
+          description: Return a list, data will depend on the list type
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alist"
+        "404":
+          description: List is not in the system
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: User making request does not have access to the list in question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Input had no errors but was not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+    delete:
+      tags:
+        - aList
+      description: Delete a list
+      operationId: deleteListByUuid
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of list
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: list deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: List is not in the system
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: UUID does not match that of the logged in user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /alist/by/me:
+    get:
+      tags:
+        - aList
+      description: Get lists by me
+      operationId: getListsByMe
+      parameters:
+        - in: query
+          name: labels
+          description: Filter your lists by one or many labels. "separated by ,".
+          schema:
+            type: string
+        - in: query
+          name: list_type
+          description: Filter your lists by type v1, v2 etc
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Return an array of lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alist"
+  /spaced-repetition/:
+    post:
+      tags:
+        - spacedRepetition
+      operationId: addSpacedRepetitionEntry
+      description: Add entry for spaced based learning
+      requestBody:
+        description: Entry to add for spaced based learning
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+            examples:
+              v1:
+                $ref: "#/components/examples/SpacedRepetitionInputV1"
+              v2:
+                $ref: "#/components/examples/SpacedRepetitionInputV2"
+      responses:
+        "200":
+          description: Entry already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpacedRepetition"
+              examples:
+                v1:
+                  $ref: "#/components/examples/SpacedRepetitionV1"
+                v2:
+                  $ref: "#/components/examples/SpacedRepetitionV2"
+        "201":
+          description: Entry added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpacedRepetition"
+              examples:
+                v1:
+                  $ref: "#/components/examples/SpacedRepetitionV1"
+                v2:
+                  $ref: "#/components/examples/SpacedRepetitionV2"
+        "422":
+          description: Something wrong with the payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /spaced-repetition/{uuid}:
+    delete:
+      tags:
+        - spacedRepetition
+      description: Deletes a single entry based on the UUID
+      operationId: deleteSpacedRepetitionEntry
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: entry deleted
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Entry doesnt exist.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /spaced-repetition/all:
+    get:
+      tags:
+        - spacedRepetition
+      description: Get all entries for spaced repetition learning
+      operationId: getSpacedRepetitionEntries
+      responses:
+        "200":
+          description: Return list of all entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpacedRepetition"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /spaced-repetition/next:
+    get:
+      tags:
+        - spacedRepetition
+      description: Get next entry for spaced based learning
+      operationId: getNextSpacedRepetitionEntry
+      responses:
+        "200":
+          description: Return entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpacedRepetition"
+        "204":
+          description: User has entries, but time has not passed to show any
+        "404":
+          description: User has no entries.
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /spaced-repetition/viewed:
+    post:
+      tags:
+        - spacedRepetition
+      operationId: updateSpacedRepetitionEntry
+      description: Update spaced entry with feedback from the user
+      requestBody:
+        description: Tell the system if we should move forward or backwards with the learning
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpacedRepetitionEntryViewed"
+      responses:
+        "200":
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpacedRepetition"
+        "404":
+          description: Entry not found, no body
+        "422":
+          description: Something wrong with the payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /spaced-repetition/overtime/active/{uuid}:
+    get:
+      tags:
+        - spacedRepetition
+      description: Ugly light url to check if list active for this user.
+      operationId: spacedRepetitionOvertimeIsActive
+      parameters:
+        - name: uuid
+          in: path
+          description: List UUID to check
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List is active
+        "404":
+          description: List is not active
+  /spaced-repetition/overtime:
+    post:
+      tags:
+        - spacedRepetition
+      description: Add for dripfeed (Slowly add this list for spaced repetition learning).
+      operationId: spacedRepetitionAddListToOvertime
+      requestBody:
+        description: list to add to dripfeed
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Success, list added to dripfeed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpacedRepetitionOvertimeInfo"
+        "403":
+          description: You do not have access to read list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: List not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Something wrong with the input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+    delete:
+      tags:
+        - spacedRepetition
+      description: Remove list from dripfeed.
+      operationId: spacedRepetitionRemoveListFromOvertime
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: "#/components/schemas/SpacedRepetitionOvertimeInputBase"
+      responses:
+        "200":
+          description: Success, list removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: You do not have access to do this action
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /challenge/:
+    post:
+      tags:
+        - challenge
+      operationId: createChallenge
+      description: Create a new challenge
+      requestBody:
+        description: Setup a challenge
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeInput"
+      responses:
+        "201":
+          description: Challenge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeShortInfo"
+        "422":
+          description: Most likely, the description is empty or the kind is not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /challenges/{userUUID}:
+    get:
+      tags:
+        - challenge
+      description: Get all challenges for a given user
+      operationId: getChallengesByUser
+      parameters:
+        - in: path
+          name: userUUID
+          schema:
+            type: string
+          required: true
+          description: userUUID to get challenges
+        - in: query
+          name: kind
+          description: Filter challenges by a single kind
+          schema:
+            $ref: "#/components/schemas/ChallengeKind"
+      responses:
+        "200":
+          description: Return list of all challenges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChallengeShortInfo"
+        "403":
+          description: Lacking permission to look up the user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /challenge/{uuid}/join:
+    put:
+      tags:
+        - challenge
+      description: Join a challenge
+      operationId: joinChallenge
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Join challenge
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Challenge doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /challenge/{uuid}/leave:
+    put:
+      tags:
+        - challenge
+      description: Leave a challenge
+      operationId: leaveChallenge
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Left challenge
+        "400":
+          description: Bad request, missing uuid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "403":
+          description: You can only leave a challenge you have joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Challenge doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /challenge/{uuid}:
+    get:
+      tags:
+        - challenge
+      description: Get all challenge info, users and records
+      operationId: getChallenge
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeInfo"
+        "403":
+          description: You can only lookup challenges that you have joined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Challenge doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+    delete:
+      tags:
+        - challenge
+      description: Delete a challenge, forever
+      operationId: deleteChallenge
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge deleted
+        "403":
+          description: You can only delete a challenge if you created it
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Challenge doesn't exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /mobile/register-device:
+    post:
+      tags:
+        - mobile
+      operationId: registerDevice
+      description: Register the user and the token, to be able to send push notifications
+      requestBody:
+        description: Device information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpMobileRegisterInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Most likely, the token is empty, or the app_identifier is [empty, not valid]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /remind/daily/:
+    put:
+      tags:
+        - remind
+      operationId: setRemindDailySetting
+      description: Set remind settings for app_identifier
+      requestBody:
+        description: Remind settings
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RemindDailySettings"
+      responses:
+        "200":
+          description: Remind settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindDailySettings"
+        "422":
+          description: Something wrong with the payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /remind/daily/{app_identifier}:
+    get:
+      tags:
+        - remind
+      operationId: getRemindDailySettingsByAppIdentifier
+      parameters:
+        - name: app_identifier
+          in: path
+          description: Via app_identifier which settings to remove
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RemindDailySettings"
+        "404":
+          description: Settings not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "422":
+          description: Check the app identifier is valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+    delete:
+      tags:
+        - remind
+      operationId: deleteRemindDailySettingsByAppIdentifier
+      parameters:
+        - name: app_identifier
+          in: path
+          description: Via app_identifier which settings to remove
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: settings deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: app_identifier not found, I wonder if I want this one
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /app-settings/remind_v1:
+    put:
+      tags:
+        - appSettings
+      operationId: setRemindV1
+      description: Enable or disable push notifications for spaced repetition in remindV1
+      requestBody:
+        description: Settings
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppSettingsRemindV1"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettingsRemindV1"
+        "422":
+          description: Something wrong with the payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
