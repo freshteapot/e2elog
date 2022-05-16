@@ -84,6 +84,38 @@ components:
           type: string
         ext:
           type: string
+    PlankStreakStat:
+      type: object
+      properties:
+        streak:
+          type: integer
+        startDate:
+          type: string
+          format: date
+          description: When did the streak start
+        endDate:
+          type: string
+          format: date
+          description: When did the streak end or today
+    PlankStats:
+      type: object
+      required:
+        - streaks
+      properties:
+        streaks:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlankStreakStat"
+    HttpPlankShareRequestBody:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - private
+            - public
     Plank:
       type: object
       required:
@@ -824,8 +856,8 @@ paths:
     get:
       tags:
         - plank
-      description: Get all planks for a given user
-      operationId: getPlankHistoryByUser
+      description: Get all planks for logged in user
+      operationId: getPlankHistoryByLoggedInUser
       responses:
         "200":
           description: Return list of all entries
@@ -835,6 +867,40 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Plank"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/history/{uuid}:
+    get:
+      tags:
+        - plank
+      description: Get all planks for a given user
+      operationId: getPlankHistoryByUser
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Return list of all entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plank"
+        "403":
+          description: You do not have access to read plank history for this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
         "500":
           description: unexpected error
           content:
@@ -865,6 +931,108 @@ paths:
                 $ref: "#/components/schemas/HttpResponseMessage"
         "404":
           description: Not able to find plank record linked to this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/stats/{uuid}:
+    get:
+      tags:
+        - plank
+      description: Get plank stats for a given user
+      operationId: getPlankStatsByUser
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of entry
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Return stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlankStats"
+        "403":
+          description: You do not have access to read plank stats for this user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "404":
+          description: Not able to find plank stats by user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/stats/share:
+    post:
+      tags:
+        - plank
+      operationId: ShareStats
+      description: Share Plank stats with the public or keep them private
+      requestBody:
+        description: Share with the public or make private
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpPlankShareRequestBody"
+      responses:
+        "200":
+          description: Share updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "400":
+          description: The input was not valid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "500":
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+  /plank/history/share:
+    post:
+      tags:
+        - plank
+      operationId: sharePlankHistory
+      description: Share Plank history with the public or keep them private
+      requestBody:
+        description: Share with the public or make private
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HttpPlankShareRequestBody"
+      responses:
+        "200":
+          description: Share updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpResponseMessage"
+        "400":
+          description: The input was not valid
           content:
             application/json:
               schema:
@@ -1783,7 +1951,7 @@ paths:
       tags:
         - remind
       operationId: setRemindDailySetting
-      description: Set remind settings for app_identifier
+      description: Set remind settings for app_identifier, if you have done an activity for that day, it will not count towards the motivation message
       requestBody:
         description: Remind settings
         required: true

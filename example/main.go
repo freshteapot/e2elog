@@ -21,7 +21,7 @@ func main() {
 	flag.Parse()
 
 	b, _ := ioutil.ReadFile(*openapiPath)
-	s, _ := openapi3.NewSwaggerLoader().LoadSwaggerFromData(b)
+	s, _ := openapi3.NewLoader().LoadFromData(b)
 
 	summary, _ := e2elog.Coverage(s, *logsPath, *stripUrlPrefix)
 

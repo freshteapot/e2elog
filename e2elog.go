@@ -45,7 +45,7 @@ type Endpoint struct {
 // Coverage based on openapi document and a list of logs,
 // Link the logs to the openapi paths to get insight into
 // how many endpoints have been touched
-func Coverage(s *openapi3.Swagger, pathToLogs string, stripUrlPrefix string) (Summary, error) {
+func Coverage(s *openapi3.T, pathToLogs string, stripUrlPrefix string) (Summary, error) {
 	endpoints := getPaths(s)
 	router := createRouter(endpoints)
 
