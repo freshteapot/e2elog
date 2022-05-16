@@ -105,7 +105,7 @@ func Coverage(s *openapi3.T, pathToLogs string, stripUrlPrefix string) (Summary,
 }
 
 // getPaths
-func getPaths(s *openapi3.Swagger) []Endpoint {
+func getPaths(s *openapi3.T) []Endpoint {
 	var endpoints []Endpoint
 	for uri, path := range s.Paths {
 		for method, operation := range path.Operations() {
