@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -107,9 +108,11 @@ func Coverage(s *openapi3.T, pathToLogs string, stripUrlPrefix string) (Summary,
 // getPaths
 func getPaths(s *openapi3.T) []Endpoint {
 	var endpoints []Endpoint
-	for uri, path := range s.Paths {
+	for uri, path := range s.Paths.Map() {
+		fmt.Println(uri)
 		for method, operation := range path.Operations() {
-			for statusCode := range operation.Responses {
+
+			for statusCode, _ := range operation.Responses.Map() {
 				endpoint := Endpoint{
 					Path:        uri,
 					Method:      method,
